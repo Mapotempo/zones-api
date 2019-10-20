@@ -1,0 +1,112 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "API V1",
+    "version": "v1"
+  },
+  "paths": {
+    "/v1/zones": {
+      "get": {
+        "summary": "Retrieves Zones",
+        "tags": [
+          "Zone"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "type": "string",
+            "description": "Result limited to bbox defined by four float numbers coma delimited (longitude, latitude). Default no limit."
+          },
+          {
+            "name": "with_geom",
+            "in": "query",
+            "type": "boolean",
+            "description": "Include or not the geometry part in the result. Default: true"
+          },
+          {
+            "name": "children_level",
+            "in": "query",
+            "type": "integer",
+            "description": "Recursive level of children included. Default 0."
+          },
+          {
+            "name": "property_filters",
+            "in": "query",
+            "type": "json",
+            "description": "Select zones matching all the filters. Default none"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Zone found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "/v1/zones/{id}": {
+      "get": {
+        "summary": "Retrieves a Zone",
+        "tags": [
+          "Zone"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer",
+            "required": true
+          },
+          {
+            "name": "with_geom",
+            "in": "query",
+            "type": "boolean",
+            "description": "Include or not the geometry part in the result. Default: true"
+          },
+          {
+            "name": "children_level",
+            "in": "query",
+            "type": "integer",
+            "description": "Recursive level of children included,. Default 0."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Zone found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "404": {
+            "description": "Zone not found"
+          }
+        }
+      }
+    }
+  }
+}

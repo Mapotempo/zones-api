@@ -1,0 +1,23 @@
+version: "3"
+
+volumes:
+  pgdata:
+
+services:
+  postgres:
+#    container_name: postgres
+    image: "openmaptiles/postgis:2.9"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+#    ports:
+#      - 5432:5432
+    env_file: .env
+
+  importer:
+#    build: ./importer
+    image: osmwithoutborders/cosmogony-importer
+    env_file: .env
+    volumes:
+      - ${PATH_TO_COSMOGONY_DIR:-./cosmogony_data}:/data
+    links:
+      - postgres:postgres

@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  postgres:
+    image: mdillon/postgis
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    volumes:
+      - .:/opt/zones-api
+    ports:
+      - "3000:3000"
+    links:
+      - postgres
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_USERNAME=postgres
+
+volumes:
+  pgdata:

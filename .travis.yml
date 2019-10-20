@@ -1,0 +1,18 @@
+language: ruby
+sudo: true
+
+addons:
+  postgresql: '10'
+  apt:
+    packages:
+      - postgresql-10-postgis-2.4
+      - postgresql-10-postgis-2.4-scripts
+
+before_install:
+  - sudo -u postgres psql -c "ALTER ROLE travis SUPERUSER"
+
+before_script:
+  - psql -U postgres -c "CREATE DATABASE zone_api_test"
+  - psql -U postgres -c "CREATE EXTENSION postgis"
+
+script: bundle exec rake test
