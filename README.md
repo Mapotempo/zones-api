@@ -193,15 +193,15 @@ docker run -v `pwd`/data:/data osmwithoutborders/cosmogony -i /data/france-lates
 
 Import the `.json` into Postgres:
 ```
-docker-compose -f docker-compose.cosmogony.yml start postgres
+docker-compose -f docker-compose.cosmogony.yaml start postgres
 sleep 60 # Cool, Waiting for postgres to be ready
 # 14 min, 1cpu
-docker-compose -f docker-compose.cosmogony.yml run --rm importer ./import.py import_data /data/france-latest.json
+docker-compose -f docker-compose.cosmogony.yaml run --rm importer ./import.py import_data /data/france-latest.json
 ```
 
 Export dump from Postgres:
 ```
-docker-compose -f docker-compose.cosmogony.yml exec postgres psql -c "
+docker-compose -f docker-compose.cosmogony.yaml exec postgres psql -c "
 COPY (
   SELECT
     id,
