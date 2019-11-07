@@ -4,13 +4,6 @@
 
 Backend API to store and retrieve zone polygons based on arbitrary geometry like administrative or survey data.
 
-## Install
-
-```
-rails db:create
-rails db:setup
-```
-
 ## Usage
 
 Start the web server with:
@@ -18,7 +11,6 @@ Start the web server with:
 bundle exec rails server
 ```
 The service is now available at http://localhost:3000 and the Swagger UI at http://localhost:3000/api-docs/index.html.
-
 
 ### API
 
@@ -157,9 +149,16 @@ Test the OpenAPI Spec
 bundle exec rspec
 ```
 
-## Load data from OpenStreetMap with Cosmogony
+## Install
 
-### Build Docker
+### Build
+
+From the Zones API project directory.
+
+Build Zones API Docker image:
+```
+docker-compose build
+```
 
 Build Cosmogony Docker
 ```
@@ -176,24 +175,34 @@ cd cosmogony_explorer
 docker-compose -f docker-compose.yml -f docker-compose.build.yml build importer
 ```
 
+### Setup
+
+Initialize the Zones API database:
+```
+docker-compose up -d postgres && sleep 20
+docker-compose run --rm web rake db:setup
+```
+
+## Load data from OpenStreetMap with Cosmogony
+
 ### Extract data from OpenStreetMap
 
 Download an OpenStreetMap extract:
 ```
-mkdir data
+mkdir cosmogony_data
 # +4Go
-wget http://download.openstreetmap.fr/extracts/europe/france-latest.osm.pbf -O data/france-latest.osm.pbf
+wget http://download.openstreetmap.fr/extracts/europe/france-latest.osm.pbf -O cosmogony_data/france-latest.osm.pbf
 ```
 
 Compute zones hierarchy with Cosmogony from `.osm.pbf`, save the result as `.json`:
 ```
 # 4cpu, 68min, +390Mo
-docker run -v `pwd`/data:/data osmwithoutborders/cosmogony -i /data/france-latest.osm.pbf -o /data/france-latest.json
+docker run -v `pwd`/cosmogony_data:/data osmwithoutborders/cosmogony -i /data/france-latest.osm.pbf -o /data/france-latest.json
 ```
 
 Import the `.json` into Postgres:
 ```
-docker-compose -f docker-compose.cosmogony.yaml start postgres
+docker-compose -f docker-compose.cosmogony.yaml up -d cosmogony_postgres
 sleep 60 # Cool, Waiting for postgres to be ready
 # 14 min, 1cpu
 docker-compose -f docker-compose.cosmogony.yaml run --rm importer ./import.py import_data /data/france-latest.json
@@ -201,7 +210,7 @@ docker-compose -f docker-compose.cosmogony.yaml run --rm importer ./import.py im
 
 Export dump from Postgres:
 ```
-docker-compose -f docker-compose.cosmogony.yaml exec postgres psql -c "
+docker-compose -f docker-compose.cosmogony.yaml run --rm cosmogony_postgres psql -c "
 COPY (
   SELECT
     id,
@@ -216,27 +225,10 @@ COPY (
     now() AS created_at,
     now() AS updated_at
   FROM import.zones
-) TO stdout" cosmogony cosmogony | lz4 -3 > cosmogony.tsv.lz4
+) TO stdout" cosmogony cosmogony > cosmogony.tsv
 ```
 
 Load the dump into the Zones API:
 ```
-lz4 -c cosmogony.tsv.lz4 | psql -c "COPY zones(id, ancestor_id, name, properties, source, geom, created_at, updated_at) FROM stdin" zone_api_development
-```
-
-## Docker
-
-Build the docker image:
-```
-docker-compose build
-```
-
-Initialize the database:
-```
-docker-compose run web rake db:setup
-```
-
-Then load some data:
-```
-docker-compose exec web bash -c 'cat cosmogony.tsv | psql -c "COPY zones(id, ancestor_id, name, properties, source, geom, created_at, updated_at) FROM stdin" -h postgres zone_api_development postgres'
+docker-compose run --rm web bash -c 'cat ./cosmogony_data/cosmogony.tsv | psql -c "COPY zones(id, ancestor_id, name, properties, source, geom, created_at, updated_at) FROM stdin" zone_api_development postgres'
 ```
