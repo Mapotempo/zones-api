@@ -57,7 +57,7 @@ curl -X GET "http://localhost:3000/v1/zones/5?with_geom=false" -H  "accept: appl
 #### Fetch one zone by id without geometry, but with first level children
 
 ```
-curl -X GET "http://localhost:3000/v1/zones/5?with_geom=false&children_level=1" -H  "accept: application/json"
+curl -X GET "http://localhost:3000/v1/zones/5" -d with_geom=false -d children_level=1 -H  "accept: application/json"
 ```
 
 ```json
@@ -107,19 +107,19 @@ curl -X GET "http://localhost:3000/v1/zones/5?with_geom=false&children_level=1" 
 
 ### Fetch one zone filter by location and property
 
-Using filter `bbox=1.8471,48.7531,1.8471,48.7531` reduced to one point and `property_filters={"admin_level": 6}`.
+Using filter `bbox=5.9718,49.8113,5.9718,49.8113` (in Luxembourg) reduced to one point and `property_filters={"admin_level": 6}`.
 
 ```
-curl -X GET "http://localhost:3000/v1/zones?bbox=1.8471%2C48.7531%2C1.8471%2C48.7531&with_geom=false&property_filters=%7B%22admin_level%22%3A%206%7D" -H  "accept: application/json"
+curl -X GET "http://localhost:3000/v1/zones" -d bbox=5.9718,49.8113,5.9718,49.8113 -d with_geom=false -d 'property_filters={"admin_level": 6}' -H  "accept: application/json"
 ```
 
 ```json
 {
   "type": "Feature",
   "properties": {
-    "id": 78,
-    "ancestor_id": 90,
-    "name": "Yvelines",
+    "id": 89,
+    "ancestor_id": 181,
+    "name": "Canton Redange",
     "source": "OpenStreetMap",
     "nature": "state_district",
     "admin_level": 6
@@ -189,28 +189,31 @@ docker-compose run --rm web rake db:setup
 
 Download an OpenStreetMap extract:
 ```
-mkdir cosmogony_data
-# +4Go
-wget http://download.openstreetmap.fr/extracts/europe/france-latest.osm.pbf -O cosmogony_data/france-latest.osm.pbf
+mkdir -p cosmogony_data
+# Luxembourg +28 Mo
+# France +4 Go
+wget http://download.openstreetmap.fr/extracts/europe/luxembourg-latest.osm.pbf -O cosmogony_data/luxembourg-latest.osm.pbf
 ```
 
 Compute zones hierarchy with Cosmogony from `.osm.pbf`, save the result as `.json`:
 ```
-# 4cpu, 68min, +390Mo
-docker run -v `pwd`/cosmogony_data:/data osmwithoutborders/cosmogony -i /data/france-latest.osm.pbf -o /data/france-latest.json
+# Luxembourg 4 cpu, 40 s, +12 Mo
+# France 4 cpu, 68 min, +390 Mo
+docker run -v `pwd`/cosmogony_data:/data osmwithoutborders/cosmogony -i /data/luxembourg-latest.osm.pbf -o /data/luxembourg-latest.json
 ```
 
 Import the `.json` into Postgres:
 ```
-docker-compose -f docker-compose.cosmogony.yaml up -d cosmogony_postgres
+docker-compose -p cosmogony -f docker-compose.cosmogony.yaml up -d cosmogony_postgres
 sleep 60 # Cool, Waiting for postgres to be ready
-# 14 min, 1cpu
-docker-compose -f docker-compose.cosmogony.yaml run --rm importer ./import.py import_data /data/france-latest.json
+# Luxembourg 1 cpu, 11 s
+# France 1 cpu, 14 min
+docker-compose -p cosmogony -f docker-compose.cosmogony.yaml run --rm importer ./import.py import_data /data/luxembourg-latest.json
 ```
 
-Export dump from Postgres:
+Export dump from Postgres, simplify using Lamber 93 projection (France, 2154):
 ```
-docker-compose -f docker-compose.cosmogony.yaml run --rm cosmogony_postgres psql -c "
+docker-compose -p cosmogony -f docker-compose.cosmogony.yaml exec cosmogony_postgres psql -c "
 COPY (
   SELECT
     id,
@@ -221,14 +224,19 @@ COPY (
       'nature', zone_type
     ) AS properties,
     'OpenStreetMap' AS source,
-    ST_Transform(geometry, 4326) AS geometry,
+    ST_Transform(ST_SimplifyPreserveTopology(ST_Transform(geometry, 2154), 10), 4326) AS geometry,
     now() AS created_at,
     now() AS updated_at
   FROM import.zones
-) TO stdout" cosmogony cosmogony > cosmogony.tsv
+) TO stdout" cosmogony cosmogony > /data/cosmogony.tsv
+```
+
+Stop the Cosmogony part:
+```
+docker-compose -p cosmogony -f docker-compose.cosmogony.yaml stop cosmogony_postgres
 ```
 
 Load the dump into the Zones API:
 ```
-docker-compose run --rm web bash -c 'cat ./cosmogony_data/cosmogony.tsv | psql -c "COPY zones(id, ancestor_id, name, properties, source, geom, created_at, updated_at) FROM stdin" zone_api_development postgres'
+docker-compose run --rm web bash -c 'cat ./cosmogony_data/luxembourg_cosmogony.tsv | psql -h postgres -c "COPY zones(id, ancestor_id, name, properties, source, geom, created_at, updated_at) FROM stdin" zone_api_development postgres'
 ```
