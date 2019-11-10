@@ -224,11 +224,17 @@ COPY (
       'nature', zone_type
     ) AS properties,
     'OpenStreetMap' AS source,
-    ST_Transform(ST_SimplifyPreserveTopology(ST_Transform(geometry, 2154), 10), 4326) AS geometry,
+    ST_Transform(
+      ST_SimplifyPreserveTopology(
+        ST_Transform(geometry, 2154),
+        ST_MaxDistance(ST_Transform(geometry, 2154), ST_Transform(geometry, 2154)) / 500
+      ),
+      4326
+    ) AS geometry,
     now() AS created_at,
     now() AS updated_at
   FROM import.zones
-) TO stdout" cosmogony cosmogony > /data/cosmogony.tsv
+) TO stdout" cosmogony cosmogony > cosmogony_data/luxembourg_cosmogony.tsv
 ```
 
 Stop the Cosmogony part:
