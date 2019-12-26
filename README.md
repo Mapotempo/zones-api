@@ -23,12 +23,12 @@ The returns are always geojson.
 
 On all the endpoint the commons parameters are:
 
-* `with_geom`: include of not the geometries in the geojson.
+* `with_geom`: include or not the geometries in the geojson.
 * `children_level`: recursively include children of the zone and how much level.
 
 The fetch multiple also have the following parameters:
 
-* `bbox`: restrict zones selection this bounding box. Does not affect the recessive children.
+* `bbox`: restrict zones selection this bounding box. Affect the recessive children.
 * `property_filters`: restrict zones selection the one having all this properties. Does not affect the recessive children.
 
 ### Examples

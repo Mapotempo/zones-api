@@ -6,10 +6,10 @@ class V1::ZonesController < ApplicationController
 
   def index
     zones = Zone.where(nil)
-    zones = zones.intersects(@query.bbox) if @query.bbox
+    zones = zones.intersects(@query.bbox)
     zones = zones.property_filters(@query.property_filters) unless @query.property_filters.empty?
 
-    zones = apply_query(zones)
+    zones = apply_query(zones, @query.bbox)
     render json: to_geojson(zones)
   end
 
@@ -37,9 +37,9 @@ class V1::ZonesController < ApplicationController
     @query.validate!
   end
 
-  def apply_query(zones)
+  def apply_query(zones, bbox = nil)
     if @query.children_level.positive?
-      zones += Zone.recursive_children_level(zones, @query.children_level)
+      zones += Zone.recursive_children_level(zones, @query.children_level, bbox)
       zones.uniq!
     end
 
