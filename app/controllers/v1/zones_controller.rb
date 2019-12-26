@@ -80,7 +80,11 @@ module Validate
     validate :bbox_validation
     validate :property_filters_validation
     validates :with_geom, inclusion: [true, false]
-    validates :children_level, numericality: true
+    validates :children_level, numericality: {
+      only_integer: true,
+      greater_than_or_equal_to: 0,
+      less_than_or_equal_to: 3
+    }
 
     def initialize(params = {})
       @bbox = params[:bbox]

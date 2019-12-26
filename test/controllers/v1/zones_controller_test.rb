@@ -62,7 +62,7 @@ class V1::ZonesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'index recursive children' do
-    get v1_zones_url(children_level: 99)
+    get v1_zones_url(children_level: 2)
     assert_response :success
 
     geojson = ActiveSupport::JSON.decode(response.body)
@@ -72,6 +72,11 @@ class V1::ZonesControllerTest < ActionDispatch::IntegrationTest
     geom = RGeo::GeoJSON.decode(response.body)
     assert geom
     assert_equal 2, geom.size
+  end
+
+  test 'index too much recursive children' do
+    get v1_zones_url(children_level: 99)
+    assert_response :bad_request
   end
 
   test 'index bbox 1' do
