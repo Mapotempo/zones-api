@@ -22,6 +22,12 @@
             "description": "Result limited to bbox defined by four float numbers coma delimited (longitude, latitude). Default no limit."
           },
           {
+            "name": "intersect",
+            "in": "query",
+            "type": "json",
+            "description": "Result limited to objects intersecting the GeoJSON geometry. Default no limit."
+          },
+          {
             "name": "with_geom",
             "in": "query",
             "type": "boolean",

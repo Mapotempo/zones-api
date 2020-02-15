@@ -102,6 +102,39 @@ class V1::ZonesControllerTest < ActionDispatch::IntegrationTest
     assert_response :bad_request
   end
 
+  test 'index intersect 1' do
+    get v1_zones_url(intersect: '{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[1,1],[1,2],[2,2],[2,1],[1,1]]]}}')
+    assert_response :success
+
+    geojson = ActiveSupport::JSON.decode(response.body)
+    assert geojson, response.body
+    assert_equal 0, geojson['features'].size, geojson['features']
+  end
+
+  test 'index intersect 2' do
+    get v1_zones_url(intersect: '{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[1.3417,42.3093],[1.8471,42.3093],[1.8471,42.7531],[1.3417,42.7531],[1.3417,42.3093]]]}}')
+    assert_response :success
+
+    geojson = ActiveSupport::JSON.decode(response.body)
+    assert geojson, response.body
+    assert_equal 2, geojson['features'].size, geojson['features']
+  end
+
+  test 'index intersect 3' do
+    get v1_zones_url(intersect: '{"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[1.440582275390625,42.628906895633456],[1.528472900390625,42.405206634470666],[1.6994476318359375,42.63496903887609],[1.440582275390625,42.628906895633456]]]}}]}')
+    assert_response :success
+
+    geojson = ActiveSupport::JSON.decode(response.body)
+    assert geojson, response.body
+    assert_equal 2, geojson['features'].size, geojson['features']
+  end
+
+  test 'index invalid intersect' do
+    get v1_zones_url(intersect: 'plouf')
+    puts response.body
+    assert_response :bad_request
+  end
+
   test 'index property_filters' do
     get v1_zones_url(property_filters: { nature: :country }.to_json)
     assert_response :success

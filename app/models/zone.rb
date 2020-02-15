@@ -5,11 +5,11 @@ class Zone < ApplicationRecord
   scope :intersects, ->(geom) { geom ? where('ST_Intersects(geom, ?)', geom) : where(nil) }
   scope :property_filters, ->(filters) { where('properties @> ?::jsonb', filters.to_json) }
 
-  def self.recursive_children_level(zones, levels, bbox = nil)
+  def self.recursive_children_level(zones, levels, bbox = nil, intersect = nil)
     # TIP: loop directly with recursive SQL query to improve perf
     prev_zones = zones
     1.upto(levels).collect do |_|
-      curr_zones = prev_zones.collect { |pz| pz.children.intersects(bbox) }.flatten
+      curr_zones = prev_zones.collect { |pz| pz.children.intersects(bbox).intersects(intersect) }.flatten
       prev_zones = curr_zones
       curr_zones
     end.flatten.uniq(&:id)

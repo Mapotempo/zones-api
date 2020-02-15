@@ -7,9 +7,10 @@ class V1::ZonesController < ApplicationController
   def index
     zones = Zone.where(nil)
     zones = zones.intersects(@query.bbox)
+    zones = zones.intersects(@query.intersect)
     zones = zones.property_filters(@query.property_filters) unless @query.property_filters.empty?
 
-    zones = apply_query(zones, @query.bbox)
+    zones = apply_query(zones, @query.bbox, @query.intersect)
     render json: to_geojson(zones)
   end
 
@@ -31,15 +32,15 @@ class V1::ZonesController < ApplicationController
   private
 
   def validate_params
-    params.permit(:id, :bbox, :with_geom, :children_level, :property_filters)
+    params.permit(:id, :bbox, :intersect, :with_geom, :children_level, :property_filters)
 
     @query = Validate::Query.new(params)
     @query.validate!
   end
 
-  def apply_query(zones, bbox = nil)
+  def apply_query(zones, bbox = nil, intersect = nil)
     if @query.children_level.positive?
-      zones += Zone.recursive_children_level(zones, @query.children_level, bbox)
+      zones += Zone.recursive_children_level(zones, @query.children_level, bbox, intersect)
       zones.uniq!
     end
 
@@ -75,9 +76,10 @@ module Validate
   class Query
     include ActiveModel::Validations
 
-    attr_accessor :bbox, :with_geom, :children_level, :property_filters
+    attr_accessor :bbox, :intersect, :with_geom, :children_level, :property_filters
 
     validate :bbox_validation
+    validate :intersect_validation
     validate :property_filters_validation
     validates :with_geom, inclusion: [true, false]
     validates :children_level, numericality: {
@@ -88,6 +90,7 @@ module Validate
 
     def initialize(params = {})
       @bbox = params[:bbox]
+      @intersect = params[:intersect]
       @with_geom = !params[:with_geom].present? || params[:with_geom] == 'true'
       @children_level = params[:children_level].to_i
       @property_filters = params[:property_filters] || {}
@@ -117,6 +120,21 @@ module Validate
         RGeo::Cartesian.factory(srid: 4326).point(x1, y1),
         RGeo::Cartesian.factory(srid: 4326).point(x2, y2)
       ).to_geometry
+    end
+
+    def intersect_validation
+      return unless @intersect.is_a?(String)
+
+      factory = RGeo::Cartesian.factory(srid: 4326)
+      geojson = RGeo::GeoJSON.decode(@intersect, geo_factory: factory)
+
+      @intersect = if geojson.is_a?(RGeo::GeoJSON::FeatureCollection)
+        factory.collection(geojson.map{ |feature| feature.geometry })
+      else
+        geojson.geometry
+      end
+    rescue JSON::ParserError
+      errors.add(:intersect, 'should be a valid geojson')
     end
 
     def property_filters_validation

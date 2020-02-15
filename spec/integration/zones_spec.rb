@@ -6,6 +6,7 @@ describe 'Zones V1 API', type: :request do
       tags 'Zone'
       produces 'application/json'
       parameter name: :bbox, in: :query, type: :string, description: 'Result limited to bbox defined by four float numbers coma delimited (longitude, latitude). Default no limit.'
+      parameter name: :intersect, in: :query, type: :json, description: 'Result limited to objects intersecting the GeoJSON geometry. Default no limit.'
       parameter name: :with_geom, in: :query, type: :boolean, description: 'Include or not the geometry part in the result. Default: true'
       parameter name: :children_level, in: :query, type: :integer, description: 'Recursive level of children included. Default 0. Up to 3.'
       parameter name: :property_filters, in: :query, type: :json, description: 'Select zones matching all the filters. Default none'

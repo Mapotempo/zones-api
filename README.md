@@ -29,6 +29,7 @@ On all the endpoint the commons parameters are:
 The fetch multiple also have the following parameters:
 
 * `bbox`: restrict zones selection this bounding box. Affect the recessive children.
+* `intersect`: restrict zones selection to ones intersecting the GeoJSON geometry. Default no limit.'
 * `property_filters`: restrict zones selection the one having all this properties. Does not affect the recessive children.
 
 ### Examples
