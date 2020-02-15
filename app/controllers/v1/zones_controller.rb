@@ -100,14 +100,14 @@ module Validate
 
       coords = @bbox.split(',')
       if coords.size != 4
-        errors.add(:bbox, 'bbox should be 4 floating numbers, comma separated')
+        errors.add(:bbox, 'should be 4 floating numbers, comma separated')
         return
       else
         all_float = coords.all? do |c|
           true if Float(c) rescue false
         end
         if !all_float
-          errors.add(:bbox, 'bbox should be 4 floating numbers, comma separated')
+          errors.add(:bbox, 'should be 4 floating numbers, comma separated')
           return
         end
       end
@@ -124,7 +124,7 @@ module Validate
 
       @property_filters = JSON.parse(@property_filters)
     rescue JSON::ParserError
-      errors.add(:property_filters, 'property_filters should be a valid json dictionary')
+      errors.add(:property_filters, 'should be a valid json dictionary')
     end
   end
 end
