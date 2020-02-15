@@ -31,7 +31,7 @@
             "name": "children_level",
             "in": "query",
             "type": "integer",
-            "description": "Recursive level of children included. Default 0."
+            "description": "Recursive level of children included. Default 0. Up to 3."
           },
           {
             "name": "property_filters",
