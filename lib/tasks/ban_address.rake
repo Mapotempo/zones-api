@@ -51,6 +51,24 @@ namespace :ban_addresses do
     end
   end
 
+  desc "Make adresses children of city"
+  task parenthood: :environment do |task, args|
+    sql = %{
+      UPDATE
+        zones
+      SET
+        ancestor_id = p.id
+      FROM
+        zones AS p
+      WHERE
+        zones.ancestor_id IS NULL AND
+        zones.source = 'BAN' AND
+        ST_Intersects(p.geom, zones.geom)
+        ;
+    }
+    ActiveRecord::Base.connection.execute(sql)
+  end
+
   desc "Delete adresses with souce=BAN"
   task delete: :environment do |task, args|
     sql = "DELETE FROM zones WHERE source = 'BAN'"

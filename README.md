@@ -265,6 +265,11 @@ Import an adresses file.
 docker-compose -f docker-compose.yaml -f docker-compose.addok.yaml run --rm import_addok rake ban_addresses:import[/addok_data/adresses-addok-france.ndjson.gz]
 ```
 
+Link adresses to the city, so the cities can be the parent of the adresses.
+```
+docker-compose -f docker-compose.yaml -f docker-compose.addok.yaml run --rm import_addok rake ban_addresses:parenthood
+```
+
 Delete the imported addresses data.
 ```
 docker-compose -f docker-compose.yaml -f docker-compose.addok.yaml run --rm import_addok rake ban_addresses:delete
