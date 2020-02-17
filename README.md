@@ -245,5 +245,27 @@ docker-compose -p cosmogony -f docker-compose.cosmogony.yaml stop cosmogony_post
 
 Load the dump into the Zones API:
 ```
-docker-compose run --rm web bash -c 'cat ./cosmogony_data/luxembourg_cosmogony.tsv | psql -h postgres -c "COPY zones(id, ancestor_id, name, properties, source, geom, created_at, updated_at) FROM stdin" zone_api_development postgres'
+docker-compose run --rm web bash -c "cat ./cosmogony_data/luxembourg_cosmogony.tsv | psql -h postgres -c \"
+  COPY zones(id, ancestor_id, name, properties, source, geom, created_at, updated_at) FROM stdin;
+  SELECT setval('zones_id_seq', (SELECT max(id) FROM zones));
+\" zone_api_development postgres"
+```
+
+## Load adresses
+
+Load adresses in Addok ndjson format. Download the French [BAN](https://adresse.data.gouv.fr/donnees-nationales) adresses data base.
+
+```
+# + 500 MB
+wget https://adresse.data.gouv.fr/data/ban/adresses/latest/addok/adresses-addok-france.ndjson.gz -P addok_data/
+```
+
+Import an adresses file.
+```
+docker-compose -f docker-compose.yaml -f docker-compose.addok.yaml run --rm import_addok rake ban_addresses:import[/addok_data/adresses-addok-france.ndjson.gz]
+```
+
+Delete the imported addresses data.
+```
+docker-compose -f docker-compose.yaml -f docker-compose.addok.yaml run --rm import_addok rake ban_addresses:delete
 ```

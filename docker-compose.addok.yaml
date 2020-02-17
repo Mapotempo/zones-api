@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  import_addok:
+    image: zones-api_web
+    volumes:
+      - .:/opt/zones-api
+      - ./addok_data:/addok_data
+    links:
+      - postgres
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_USERNAME=postgres

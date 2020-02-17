@@ -44,4 +44,4 @@ gem 'activerecord-postgis-adapter'
 gem 'rgeo-geojson'
 gem 'rswag-api'
 gem 'rswag-ui'
-
+gem 'multiple_files_gzip_reader'
