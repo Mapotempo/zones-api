@@ -102,7 +102,8 @@ GEM
       mini_portile2 (~> 2.4.0)
     pg (1.1.4)
     public_suffix (4.0.1)
-    puma (3.12.2)
+    puma (4.3.9)
+      nio4r (~> 2.0)
     rack (2.2.2)
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
@@ -191,7 +192,7 @@ DEPENDENCIES
   byebug
   multiple_files_gzip_reader
   pg (>= 0.18, < 2.0)
-  puma (~> 3.12)
+  puma (~> 4.3)
   rails (~> 6.0.0)
   rgeo-geojson
   rspec-rails
